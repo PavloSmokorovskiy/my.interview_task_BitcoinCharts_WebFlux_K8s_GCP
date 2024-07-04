@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bitcoincharts-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: bitcoincharts
+  template:
+    metadata:
+      labels:
+        app: bitcoincharts
+    spec:
+      containers:
+        - name: bitcoincharts
+          image: us-east5-docker.pkg.dev/bitcoincharts/bitcoincharts/bitcoincharts:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
