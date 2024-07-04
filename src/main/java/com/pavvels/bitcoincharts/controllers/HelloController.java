@@ -9,9 +9,10 @@ import java.time.Duration;
 @RestController
 public class HelloController {
 
-    @GetMapping("/")
+    @GetMapping(value = "/")
     public Flux<String> hello() {
         return Flux.interval(Duration.ofSeconds(1))
-                .map(sequence -> " + 1 = " + sequence);
+                .take(10)
+                .map(sequence -> " + 1 = " + (sequence + 1));
     }
 }

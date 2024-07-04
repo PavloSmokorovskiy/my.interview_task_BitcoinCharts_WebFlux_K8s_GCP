@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: BitcoinCharts
+  thymeleaf:
+    cache: false
+
+server:
+  address: 0.0.0.0
+  port: 8080
