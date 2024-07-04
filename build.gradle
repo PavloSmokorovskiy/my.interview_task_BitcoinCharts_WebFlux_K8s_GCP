@@ -5,11 +5,11 @@ plugins {
 }
 
 group = 'com.pavvels'
-version = '0.0.1-SNAPSHOT'
+version = 'latest'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(JavaVersion.VERSION_21.toString())
     }
 }
 
