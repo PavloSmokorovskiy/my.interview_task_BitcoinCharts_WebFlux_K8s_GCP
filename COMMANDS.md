@@ -32,9 +32,11 @@ gcloud container clusters list --project bitcoincharts
 kubectl apply -f deployment/deployment.yaml
 kubectl apply -f deployment/service.yaml
 
-kubectl get pods --selector=app=bitcoincharts
+kubectl get pods --selector=app=bitcoin-charts
+kubectl logs 
+
 kubectl get services
-kubectl delete pod --selector=app=bitcoin_charts
+kubectl delete pod 
 
 gradle build --no-daemon
 gradle --stop
