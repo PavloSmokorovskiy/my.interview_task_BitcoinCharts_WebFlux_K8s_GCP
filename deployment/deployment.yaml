@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: bitcoin_charts
-          image: us-east5-docker.pkg.dev/bitcoin_charts/bitcoin_charts/bitcoin_charts:0.1
+          image: us-east5-docker.pkg.dev/bitcoincharts/bitcoincharts/bitcoin_charts:0.1
           ports:
             - containerPort: 8080
           resources:
