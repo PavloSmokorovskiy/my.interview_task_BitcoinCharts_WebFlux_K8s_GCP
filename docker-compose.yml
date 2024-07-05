@@ -1,23 +1,23 @@
-services:
-  app:
-    container_name: bitcoincharts
-    image: pavvel/bitcoincharts:latest
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-#    depends_on:
-#      - redis
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-#  redis:
-#    image: redis:latest
+#services:
+#  app:
+#    container_name: bitcoin_charts
+#    image: pavvel/bitcoin_charts:1
 #    ports:
-#      - "6379:6379"
+#      - "8080:8080"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=dev
+##    depends_on:
+##      - redis
 #    logging:
 #      options:
-#        max-size: "5m"
+#        max-size: "10m"
 #        max-file: "3"
+#
+##  redis:
+##    image: redis:latest
+##    ports:
+##      - "6379:6379"
+##    logging:
+##      options:
+##        max-size: "5m"
+##        max-file: "3"

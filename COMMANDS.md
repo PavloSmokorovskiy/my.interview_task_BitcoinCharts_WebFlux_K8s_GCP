@@ -31,4 +31,5 @@ kubectl get pods
 kubectl get services
 kubectl delete pod --selector=app=bitcoincharts
 
-
+gradle build --no-daemon
+gradle --stop

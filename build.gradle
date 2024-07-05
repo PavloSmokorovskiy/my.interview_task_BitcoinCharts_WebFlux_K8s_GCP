@@ -3,16 +3,20 @@ plugins {
     id 'org.springframework.boot' version '3.3.1'
     id 'io.spring.dependency-management' version '1.1.5'
     id 'com.palantir.docker' version '0.36.0'
-    id "com.avast.gradle.docker-compose" version "0.17.7"
+//    id "com.avast.gradle.docker-compose" version "0.17.7"
 }
 
 group = 'com.pavvels'
-version = 'latest'
+version = '0.1'
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(JavaVersion.VERSION_21.toString())
     }
+}
+
+jar {
+    enabled = false
 }
 
 configurations {
@@ -32,8 +36,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     compileOnly 'org.projectlombok:lombok'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+//    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+//    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
@@ -45,6 +49,13 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-dockerCompose {
-    isRequiredBy(tasks.test)  // Автоматически запускает и останавливает Docker Compose для тестов
+docker {
+    name "${rootProject.name}:${version}"
+    dockerfile file('Dockerfile')
+    files bootJar.outputs.files
+    buildArgs(['JAR_FILE': "${rootProject.name}-${version}.jar"])
 }
+
+//dockerCompose {
+//    isRequiredBy(tasks.test)
+//}
