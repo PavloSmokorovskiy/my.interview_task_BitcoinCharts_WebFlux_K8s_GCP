@@ -20,7 +20,7 @@ steps:
            'us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1']
     env:
       - 'CLOUDSDK_COMPUTE_REGION=us-east5'
-      - 'CLOUDSDK_COMPUTE_ZONE=us-east5-a'
+      - 'CLOUDSDK_COMPUTE_ZONE=us-east5'
 
 options:
   logging: NONE
