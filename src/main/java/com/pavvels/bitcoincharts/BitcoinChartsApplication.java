@@ -1,6 +1,7 @@
 package com.pavvels.bitcoincharts;
 
-import com.pavvels.bitcoincharts.configs.BinanceUSWebSocketClient;
+import com.pavvels.bitcoincharts.configs.BinanceUSWebSocketClient1;
+import com.pavvels.bitcoincharts.configs.BinanceUSWebSocketClient2;
 import com.pavvels.bitcoincharts.services.ApiService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,6 +15,7 @@ public class BitcoinChartsApplication {
 
         ApiService apiService = context.getBean(ApiService.class);
         apiService.performAction();
-        new BinanceUSWebSocketClient(apiService).connectToBinanceStream();
+//        new BinanceUSWebSocketClient1(apiService).connectToBinanceStream();
+//        new BinanceUSWebSocketClient2().connectToBinanceStream();
     }
 }

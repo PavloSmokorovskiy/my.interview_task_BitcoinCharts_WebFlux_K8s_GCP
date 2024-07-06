@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 
 @RequiredArgsConstructor
-public class BinanceUSWebSocketClient {
+public class BinanceUSWebSocketClient1 {
 
     private final ApiService apiService;
 
