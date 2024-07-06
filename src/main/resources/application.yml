@@ -8,6 +8,10 @@ server:
   address: 0.0.0.0
   port: 8080
 
+polygon:
+  api:
+    key: -1 #come through launch parameters
+
 binance:
   api:
     key: -1 #come through launch parameters

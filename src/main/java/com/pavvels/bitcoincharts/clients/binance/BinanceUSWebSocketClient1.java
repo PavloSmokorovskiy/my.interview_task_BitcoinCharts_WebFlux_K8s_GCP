@@ -1,6 +1,6 @@
-package com.pavvels.bitcoincharts.configs;
+package com.pavvels.bitcoincharts.clients.binance;
 
-import com.pavvels.bitcoincharts.services.ApiService;
+import com.pavvels.bitcoincharts.services.binance.BinanceApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
 import org.springframework.web.reactive.socket.WebSocketMessage;
@@ -8,14 +8,16 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 
+@Deprecated
 @RequiredArgsConstructor
 public class BinanceUSWebSocketClient1 {
 
-    private final ApiService apiService;
+    private final BinanceApiService binanceApiService;
 
     private static final String WS_URI = "wss://stream.binance.us:9443/ws/btcusdt@trade";
 
-    public void connectToBinanceStream() {
+    @SuppressWarnings("unused")
+    private void connectToBinanceStream() {
         ReactorNettyWebSocketClient client = new ReactorNettyWebSocketClient();
         client.execute(URI.create(WS_URI), session ->
                         session.send(Mono.just(session.textMessage(createAuthMessage())))
@@ -27,7 +29,7 @@ public class BinanceUSWebSocketClient1 {
     }
 
     private String createAuthMessage() {
-        return String.format("{\"method\": \"SUBSCRIBE\", \"params\": [\"btcusdt@trade\"], \"id\": 1, \"api_key\": \"%s\"}", apiService.getApiKey());
+        return String.format("{\"method\": \"SUBSCRIBE\", \"params\": [\"btcusdt@trade\"], \"id\": 1, \"api_key\": \"%s\"}", binanceApiService.getApiKey());
     }
 }
 

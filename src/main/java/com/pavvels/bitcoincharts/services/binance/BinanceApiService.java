@@ -1,17 +1,18 @@
-package com.pavvels.bitcoincharts.services;
+package com.pavvels.bitcoincharts.services.binance;
 
-import com.pavvels.bitcoincharts.configs.ApiKeysConfig;
-import lombok.Getter;
+import com.pavvels.bitcoincharts.configs.binance.BinanceApiKeysConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+@Deprecated
 @Service
 @RequiredArgsConstructor
-public class ApiService {
+public class BinanceApiService {
 
-    private final ApiKeysConfig apiKeys;
+    private final BinanceApiKeysConfig apiKeys;
 
-    public void performAction() {
+    @SuppressWarnings("unused")
+    private void performAction() {
         System.out.println("APIKey: " + apiKeys.apiKey());
         System.out.println("Secret: " + apiKeys.secretKey());
     }
@@ -19,8 +20,8 @@ public class ApiService {
     public String getApiKey(){
         return apiKeys.apiKey();
     }
-
-    public String getSecret(){
+    @SuppressWarnings("unused")
+    private String getSecret(){
         return apiKeys.secretKey();
     }
 }

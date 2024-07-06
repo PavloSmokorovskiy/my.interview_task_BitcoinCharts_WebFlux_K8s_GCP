@@ -1,4 +1,4 @@
-package com.pavvels.bitcoincharts.configs;
+package com.pavvels.bitcoincharts.clients.binance;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -7,11 +7,12 @@ import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClien
 
 import java.net.URI;
 
+@Deprecated
 public class BinanceUSWebSocketClient2 {
 
     private static final String WS_URI = "wss://stream.binance.us:9443/ws/btcusdt@trade";
 
-    public void connectToBinanceStream() {
+    private void connectToBinanceStream() {
         ReactorNettyWebSocketClient client = new ReactorNettyWebSocketClient();
         client.execute(URI.create(WS_URI), session ->
                         session.receive()
@@ -21,6 +22,7 @@ public class BinanceUSWebSocketClient2 {
                 .block();
     }
 
+    @SuppressWarnings({"unused", "CallToPrintStackTrace"})
     private String processMessage(String message) {
         try {
             JSONObject json = new JSONObject(message);
