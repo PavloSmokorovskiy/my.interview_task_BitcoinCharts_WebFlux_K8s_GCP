@@ -1,6 +1,6 @@
-package com.pavvels.bitcoincharts.clients.binance;
+package com.pavvels.price_charts.clients.binance;
 
-import com.pavvels.bitcoincharts.services.binance.BinanceApiService;
+import com.pavvels.price_charts.services.binance.BinanceApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
 import org.springframework.web.reactive.socket.WebSocketMessage;

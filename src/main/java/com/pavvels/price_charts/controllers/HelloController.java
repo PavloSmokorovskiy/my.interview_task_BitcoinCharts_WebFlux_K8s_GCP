@@ -1,4 +1,4 @@
-package com.pavvels.bitcoincharts.controllers;
+package com.pavvels.price_charts.controllers;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,4 +15,10 @@ public class HelloController {
                 .take(10)
                 .map(sequence -> " + 1 = " + (sequence + 1));
     }
+
+
+//    @GetMapping
+//    public String hello() {
+//        return "Hello World";
+//    }
 }

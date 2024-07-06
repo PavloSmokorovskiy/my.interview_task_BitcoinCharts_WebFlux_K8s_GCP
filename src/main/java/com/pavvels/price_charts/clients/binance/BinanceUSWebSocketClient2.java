@@ -1,4 +1,4 @@
-package com.pavvels.bitcoincharts.clients.binance;
+package com.pavvels.price_charts.clients.binance;
 
 import org.json.JSONException;
 import org.json.JSONObject;

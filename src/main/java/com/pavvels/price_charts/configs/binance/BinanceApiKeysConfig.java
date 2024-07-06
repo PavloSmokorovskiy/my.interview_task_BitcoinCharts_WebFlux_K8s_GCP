@@ -1,4 +1,4 @@
-package com.pavvels.bitcoincharts.configs.binance;
+package com.pavvels.price_charts.configs.binance;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

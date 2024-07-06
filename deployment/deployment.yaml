@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bitcoin-charts-deployment
+  name: price-charts-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: bitcoin-charts
+      app: price-charts
   template:
     metadata:
       labels:
-        app: bitcoin-charts
+        app: price-charts
     spec:
       containers:
-        - name: bitcoin-charts
-          image: us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1
+        - name: price-charts
+          image: us-east5-docker.pkg.dev/pricecharts/price-charts/price-charts:0.1
           ports:
             - containerPort: 8080
           resources:

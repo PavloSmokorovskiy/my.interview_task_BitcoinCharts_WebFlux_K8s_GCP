@@ -1,6 +1,6 @@
-package com.pavvels.bitcoincharts.services.polygon;
+package com.pavvels.price_charts.services.polygon;
 
-import com.pavvels.bitcoincharts.configs.polygon.PolygonApiKeysConfig;
+import com.pavvels.price_charts.configs.polygon.PolygonApiKeysConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

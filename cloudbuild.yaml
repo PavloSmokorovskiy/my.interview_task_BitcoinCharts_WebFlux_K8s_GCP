@@ -1,12 +1,12 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t',
-           'us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1',
+           'us-east5-docker.pkg.dev/pricecharts/price-charts/price_charts:0.1',
            '.']
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push',
-           'us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1']
+           'us-east5-docker.pkg.dev/pricecharts/price-charts/price_charts:0.1']
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
@@ -14,7 +14,7 @@ steps:
     args: ['compute', 'instances',
            'create-with-container', 'my-vm-name',
            '--container-image',
-           'us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1']
+           'us-east5-docker.pkg.dev/pricecharts/price-charts/price_charts:0.1']
     env:
       - 'CLOUDSDK_COMPUTE_REGION=us-east5'
       - 'CLOUDSDK_COMPUTE_ZONE=us-east5-a'

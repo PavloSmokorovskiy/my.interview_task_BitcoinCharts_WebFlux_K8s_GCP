@@ -1,6 +1,6 @@
-package com.pavvels.bitcoincharts.services.binance;
+package com.pavvels.price_charts.services.binance;
 
-import com.pavvels.bitcoincharts.configs.binance.BinanceApiKeysConfig;
+import com.pavvels.price_charts.configs.binance.BinanceApiKeysConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

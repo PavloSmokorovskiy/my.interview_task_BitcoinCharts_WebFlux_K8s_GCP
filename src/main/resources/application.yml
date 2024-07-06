@@ -1,6 +1,6 @@
 spring:
   application:
-    name: bitcoin_charts
+    name: price_charts
   thymeleaf:
     cache: false
 
