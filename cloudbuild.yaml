@@ -1,26 +1,26 @@
 steps:
-  # Docker Build
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t',
-           'us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1',
-           '.']
+    args: ['build', '-t', 'us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1', '.']
 
-  # Docker Push
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push',
-           'us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1']
+    args: ['push', 'us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1']
 
-  # Entrypoint, timeout and environment variables
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
-    timeout: 240s
-    args: ['compute', 'instances',
-           'create-with-container', 'my-vm-name',
-           '--container-image',
-           'us-east5-docker.pkg.dev/bitcoincharts/bitcoin-charts/bitcoin_charts:0.1']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['container', 'clusters', 'get-credentials', 'bitcoin-charts', '--zone', 'us-east5', '--project', 'bitcoincharts']
+
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'deployment.yaml']
     env:
-      - 'CLOUDSDK_COMPUTE_REGION=us-east5'
       - 'CLOUDSDK_COMPUTE_ZONE=us-east5'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=bitcoin-charts'
+      - 'GCLOUD_PROJECT=bitcoincharts'
+
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'service.yaml']
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-east5'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=bitcoin-charts'
+      - 'GCLOUD_PROJECT=bitcoincharts'
 
 options:
   logging: NONE
