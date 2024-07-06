@@ -14,8 +14,6 @@ public class BitcoinChartsApplication {
 
         ApiService apiService = context.getBean(ApiService.class);
         apiService.performAction();
-        new BinanceUSWebSocketClient().connectToBinanceStream();
-
+        new BinanceUSWebSocketClient(apiService).connectToBinanceStream();
     }
-
 }
