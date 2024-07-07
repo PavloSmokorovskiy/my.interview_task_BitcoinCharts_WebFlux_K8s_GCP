@@ -6,6 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
         #cryptoChart {
             width: 600px;
@@ -43,7 +44,20 @@
                 borderColor: 'rgba(0, 119, 204, 1)',
                 fill: false,
                 lineTension: 0.1,
-                borderWidth: 2
+                borderWidth: 2,
+                datalabels: {
+                    align: 'end',
+                    anchor: 'end',
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    borderRadius: 3,
+                    color: 'black',
+                    font: {
+                        weight: 'bold'
+                    },
+                    formatter: function (value, context) {
+                        return `${value.y.toFixed(2)}`;
+                    }
+                }
             }]
         },
         options: {
@@ -58,7 +72,7 @@
                         autoSkip: true,
                         maxTicksLimit: 20
                     },
-                    min: () => Date.now() - 20000, // Показ последних 20 секунд
+                    min: () => Date.now() - 20000,
                     max: () => Date.now()
                 },
                 y: {
@@ -69,6 +83,9 @@
             plugins: {
                 legend: {
                     display: true
+                },
+                datalabels: {
+                    display: true
                 }
             },
             maintainAspectRatio: false,
@@ -77,40 +94,39 @@
     });
 
     const ws = new WebSocket('ws://localhost:8080/crypto-feed');
-    ws.onopen = function() {
+    ws.onopen = function () {
         console.log('WebSocket connection established');
     };
 
-    ws.onmessage = function(event) {
+    ws.onmessage = function (event) {
+        console.log('Data received:', event.data);
         try {
             const messages = JSON.parse(event.data);
             messages.forEach((data) => {
-                latestPrice = data.p; // Обновляем последнюю цену
-                latestTime = new Date(data.t); // Обновляем время последней цены
+                latestPrice = data.p;
+                latestTime = new Date(data.t);
             });
         } catch (error) {
             console.error('Error parsing data:', error);
         }
     };
 
-    ws.onerror = function(error) {
+    ws.onerror = function (error) {
         console.error('WebSocket error:', error);
     };
 
-    ws.onclose = function() {
+    ws.onclose = function () {
         console.log('WebSocket connection closed');
     };
 
-    // Функция для регулярного обновления графика каждую секунду
     setInterval(() => {
         if (latestPrice !== null) {
             const now = new Date();
             cryptoChart.data.datasets[0].data.push({
-                x: now, // Используем текущее время для метки
+                x: now,
                 y: latestPrice
             });
 
-            // Удаляем данные, которые старше 20 секунд
             cryptoChart.data.datasets[0].data = cryptoChart.data.datasets[0].data.filter(point => point.x >= (Date.now() - 20000));
 
             cryptoChart.update({
