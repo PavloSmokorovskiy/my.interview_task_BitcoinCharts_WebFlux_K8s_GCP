@@ -86,7 +86,10 @@ const updateDataDisplay = (data) => {
         content.textContent = `Time: ${new Date(data.t).toLocaleTimeString()} - Price: ${data.p.toFixed(2)} USD`;
     }
     dataDisplay.appendChild(content);
-    dataDisplay.scrollTop = dataDisplay.scrollHeight;
+
+    while (dataDisplay.children.length > 13) {
+        dataDisplay.removeChild(dataDisplay.children[0]);
+    }
 };
 
 setupWebSocket();
