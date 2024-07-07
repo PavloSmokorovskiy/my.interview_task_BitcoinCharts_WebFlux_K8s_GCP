@@ -37,16 +37,24 @@ const axisSettings = {
         type: 'time',
         time: {
             unit: 'second',
-            tooltipFormat: 'HH:mm:ss',
+            tooltipFormat: 'h:mm:ss a',
             displayFormats: {
-                second: 'HH:mm:ss'
+                second: 'h:mm:ss a'
             }
         },
         ticks: {
             autoSkip: true,
-            maxTicksLimit: 20
+            maxTicksLimit: 20,
+            callback: function (value, index, values) {
+                return new Date(value).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                }).toLowerCase();
+            }
         },
-        min: () => Date.now() - 15000,
+        min: () => Date.now() - 14000,
         max: () => Date.now()
     },
     y: {
