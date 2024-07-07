@@ -1,13 +1,27 @@
-const ws = new WebSocket('ws://localhost:8080/crypto-feed');
+let ws;
+let isPaused = false;
 
-const setupWebSocketHandlers = () => {
+document.getElementById('toggleConnection').addEventListener('click', function() {
+    if (!isPaused) {
+        this.textContent = 'Resume Connection';
+        isPaused = true;
+        if (ws) {
+            ws.close();
+        }
+    } else {
+        this.textContent = 'Pause Connection';
+        isPaused = false;
+        setupWebSocket();
+    }
+});
+
+const setupWebSocket = () => {
+    ws = new WebSocket('ws://localhost:8080/crypto-feed');
     ws.onopen = () => console.log('WebSocket connection established');
-
     ws.onmessage = (event) => {
-        console.log('Data received:', event.data);
-        processWebSocketMessage(event.data);
+        console.log('Received message:', event.data);
+        if (!isPaused) processWebSocketMessage(event.data);
     };
-
     ws.onerror = (error) => console.error('WebSocket error:', error);
     ws.onclose = () => console.log('WebSocket connection closed');
 };
@@ -28,7 +42,7 @@ const updateChartData = (data) => {
 
 const updateChartEverySecond = () => {
     setInterval(() => {
-        if (latestPrice !== null) {
+        if (latestPrice !== null && !isPaused) {
             const now = new Date();
             addDataToChart(now, latestPrice);
             removeOldDataFromChart();
@@ -46,5 +60,5 @@ const removeOldDataFromChart = () => {
     cryptoChart.data.datasets[0].data = cryptoChart.data.datasets[0].data.filter(point => point.x >= cutoffTime);
 };
 
-setupWebSocketHandlers();
+setupWebSocket();
 updateChartEverySecond();
