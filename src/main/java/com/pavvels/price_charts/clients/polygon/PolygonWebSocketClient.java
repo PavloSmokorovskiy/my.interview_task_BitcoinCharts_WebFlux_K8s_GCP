@@ -34,12 +34,13 @@ public class PolygonWebSocketClient implements WebSocketHandler {
                                 Mono.just(webSocketSession.textMessage("{\"action\":\"auth\",\"params\":\"" + polygonApiService.getApiKey() + "\"}"))
                         ).thenMany(webSocketSession.receive()
                                 .doOnNext(message -> {
-                                    String payload = message.getPayloadAsText(); // Извлекаем текст из сообщения
+                                    String payload = message.getPayloadAsText();
                                     System.out.println("Received message: " + payload);
                                     if (payload.contains("\"status\":\"connected\"")) {
                                         webSocketSession.send(Mono.just(webSocketSession.textMessage("{\"action\":\"subscribe\",\"params\":\"XT.BTC-USD\"}")))
-                                                .subscribe(); // Отправляем запрос на подписку после успешной авторизации
+                                                .subscribe();
                                     }
+                                    session.send(Mono.just(session.textMessage(payload))).subscribe();
                                 })
                                 .doOnError(error -> System.err.println("Error in WebSocket session: " + error.getMessage()))
                                 .doOnTerminate(() -> System.out.println("WebSocket session terminated."))

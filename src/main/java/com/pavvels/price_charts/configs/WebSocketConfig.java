@@ -17,11 +17,11 @@ public class WebSocketConfig {
     @Bean
     public HandlerMapping webSocketMapping(PolygonWebSocketClient polygonWebSocketClient) {
         Map<String, WebSocketHandler> map = new HashMap<>();
-        map.put("/crypto-feed", polygonWebSocketClient);  // Путь WebSocket
+        map.put("/crypto-feed", polygonWebSocketClient);
 
         SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
         mapping.setUrlMap(map);
-        mapping.setOrder(-1); // Приоритет перед стандартными маппингами
+        mapping.setOrder(-1);
         return mapping;
     }
 
