@@ -1,21 +1,56 @@
 package com.pavvels.price_charts.clients.polygon;
 
 import com.pavvels.price_charts.services.polygon.PolygonApiService;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.socket.WebSocketMessage;
+import org.springframework.web.reactive.socket.WebSocketHandler;
+import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
 import reactor.core.publisher.Mono;
+import org.springframework.web.reactive.socket.WebSocketMessage;
 
 import java.net.URI;
 
 @Component
-@RequiredArgsConstructor
-public class PolygonWebSocketClient {
+public class PolygonWebSocketClient implements WebSocketHandler {
 
-    final PolygonApiService polygonApiService;
-
+    private final PolygonApiService polygonApiService;
     private final ReactorNettyWebSocketClient client = new ReactorNettyWebSocketClient();
+
+    @Autowired
+    public PolygonWebSocketClient(PolygonApiService polygonApiService) {
+        this.polygonApiService = polygonApiService;
+    }
+
+    @Override
+    public Mono<Void> handle(WebSocketSession session) {
+        System.out.println("Attempting to connect to WebSocket server at:");
+        URI uri = URI.create("wss://socket.polygon.io/crypto");
+        ReactorNettyWebSocketClient client = new ReactorNettyWebSocketClient();
+
+        return client.execute(uri, webSocketSession ->
+                webSocketSession.send(
+                                Mono.just(webSocketSession.textMessage("{\"action\":\"auth\",\"params\":\"" + polygonApiService.getApiKey() + "\"}"))
+                        ).thenMany(webSocketSession.receive()
+                                .doOnNext(message -> {
+                                    String payload = message.getPayloadAsText(); // Извлекаем текст из сообщения
+                                    System.out.println("Received message: " + payload);
+                                    if (payload.contains("\"status\":\"connected\"")) {
+                                        webSocketSession.send(Mono.just(webSocketSession.textMessage("{\"action\":\"subscribe\",\"params\":\"XT.BTC-USD\"}")))
+                                                .subscribe(); // Отправляем запрос на подписку после успешной авторизации
+                                    }
+                                })
+                                .doOnError(error -> System.err.println("Error in WebSocket session: " + error.getMessage()))
+                                .doOnTerminate(() -> System.out.println("WebSocket session terminated."))
+                        )
+                        .then());
+    }
+
+//    @PostConstruct
+//    public void init() {
+//        this.connectToPolygonCryptoWebSocket();
+//    }
 
     public void connectToPolygonCryptoWebSocket() {
         URI uri = URI.create("wss://socket.polygon.io/crypto");
@@ -56,4 +91,3 @@ public class PolygonWebSocketClient {
                 .subscribe();
     }
 }
-

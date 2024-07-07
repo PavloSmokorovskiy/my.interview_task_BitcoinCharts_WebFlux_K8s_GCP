@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-Time Crypto Price Chart</title>
+    <script src="js/chart.js"></script>
+</head>
+<body>
+<h2>Real-Time BTC-USD Price Chart</h2>
+<canvas id="cryptoChart"></canvas>
+<script>
+    const ctx = document.getElementById('cryptoChart').getContext('2d');
+    const cryptoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'BTC-USD',
+                backgroundColor: 'rgba(0, 119, 204, 0.3)',
+                borderColor: 'rgba(0, 119, 204, 0.8)',
+                data: []
+            }]
+        },
+        options: {
+            scales: {
+                xAxes: [{
+                    type: 'time',
+                    time: {
+                        unit: 'second'
+                    }
+                }]
+            }
+        }
+    });
+
+    const ws = new WebSocket('ws://localhost:8080/crypto-feed');
+    ws.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        const price = data.p;
+        const time = new Date(data.t);
+
+        if (cryptoChart.data.labels.length > 50) {
+            cryptoChart.data.labels.shift();
+            cryptoChart.data.datasets[0].data.shift();
+        }
+        cryptoChart.data.labels.push(time.toLocaleTimeString());
+        cryptoChart.data.datasets[0].data.push(price);
+        cryptoChart.update();
+    };
+</script>
+</body>
+</html>

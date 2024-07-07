@@ -46,12 +46,13 @@ kubectl get pods --selector=app=price-charts
 kubectl logs 
 
 kubectl get services
+kubectl get service price-charts-service
 kubectl delete pod 
 
 docker inspect --format='{{.Architecture}}' us-east5-docker.pkg.dev/pricecharts/price-charts/price_charts:0.1
 kubectl get nodes -o jsonpath='{.items[*].status.nodeInfo.architecture}'
 
+docker buildx version
 docker buildx create --name mymultiarchbuilder --driver docker-container --use
 docker buildx inspect --bootstrap
-docker buildx build --platform linux/amd64,linux/arm64 -t us-east5-docker.pkg.dev/pricecharts/price-charts/price_charts:0.1 . --push
 docker buildx build --platform linux/amd64,linux/arm64 -t pavvel/price_charts:0.1 -t us-east5-docker.pkg.dev/pricecharts/price-charts/price_charts:0.1 . --push
