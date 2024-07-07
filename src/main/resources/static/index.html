@@ -10,8 +10,8 @@
         #cryptoChart {
             width: 600px;
             height: 300px;
-            background-color: #fff; /* Добавление фона для лучшей видимости */
-            border: 1px solid #ccc; /* Рамка вокруг канваса */
+            background-color: #fff;
+            border: 1px solid #ccc;
         }
 
         body {
@@ -58,8 +58,6 @@
                 },
                 y: {
                     beginAtZero: false,
-                    min: 50000,
-                    max: 60000,
                     grace: '5%'
                 }
             },
@@ -85,8 +83,21 @@
             console.log("Parsed data received:", messages);
             messages.forEach((data) => {
                 const price = data.p;
-                const time = data.t ? new Date(data.t) : new Date();
+                const time = data.t ? new Date(data.t) : new Date(); // Убедитесь, что time - это Date объект
                 console.log("Price:", price, "Time:", time);
+
+                if (cryptoChart.data.datasets.length > 0) {
+                    cryptoChart.data.datasets[0].data.push({
+                        x: time,
+                        y: price
+                    });
+
+                    if (cryptoChart.data.datasets[0].data.length > 50) {
+                        cryptoChart.data.datasets[0].data.shift();
+                    }
+
+                    cryptoChart.update();
+                }
             });
         } catch (error) {
             console.error('Error parsing data:', error);
