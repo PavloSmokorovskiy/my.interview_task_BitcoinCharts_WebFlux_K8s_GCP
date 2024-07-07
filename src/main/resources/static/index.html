@@ -8,21 +8,34 @@
     <script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
-        #cryptoChart {
-            width: 600px;
-            height: 300px;
-            background-color: #fff;
-            border: 1px solid #ccc;
-        }
         body {
             margin: 0;
-            padding: 40px 0;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 50vh;
-            width: 150vh;
+            height: 100vh;
+            width: 100vw;
             flex-direction: column;
+        }
+
+        h2 {
+            position: absolute;
+            top: 10px;
+            left: 30%;
+            transform: translateX(-50%);
+            width: auto;
+            text-align: center;
+        }
+
+        #cryptoChart {
+            width: 1000px;
+            height: 500px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            position: absolute;
+            top: 80px;
+            left: 2%;
         }
     </style>
 </head>
@@ -41,10 +54,10 @@
         data: {
             datasets: [{
                 label: 'BTC-USD',
-                backgroundColor: 'rgba(0, 119, 204, 0.5)',
-                borderColor: 'rgba(0, 119, 204, 1)',
+                backgroundColor: 'rgba(255, 0, 0, 1)', // Можно также изменить цвет фона, если нужно
+                borderColor: 'rgba(255, 0, 0, 1)', // Смена синего цвета на красный
                 fill: false,
-                lineTension: 0.1,
+                lineTension: 0.5,
                 borderWidth: 2,
                 datalabels: {
                     align: 'end',
@@ -62,6 +75,8 @@
             }]
         },
         options: {
+            responsive: false,
+            maintainAspectRatio: true,
             scales: {
                 x: {
                     type: 'time',
@@ -93,9 +108,7 @@
                     },
                     formatter: (value, ctx) => `${value.y.toFixed(2)} USD`
                 }
-            },
-            maintainAspectRatio: false,
-            responsive: true
+            }
         }
     });
 
