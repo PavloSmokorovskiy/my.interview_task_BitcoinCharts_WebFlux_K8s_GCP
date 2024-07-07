@@ -1,26 +1,16 @@
 import {updateDataDisplay} from './data-display.js';
-import {isClosed} from './toggle-сonnection.js';
+import {connectionState} from './toggle-сonnection.js';
 
 let ws;
+let latestPrice;
+let latestTime = new Date();
 
 export function openWebSocket() {
     ws = new WebSocket('ws://localhost:8080/crypto-feed');
-    ws.onopen = () => {
-        console.log('WebSocket connection established');
-        updateDataDisplay({t: new Date(), message: 'WebSocket connection established'});
-    };
-    ws.onmessage = (event) => {
-        console.log('Received message:', event.data);
-        if (!isClosed) processWebSocketMessage(event.data);
-    };
-    ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        updateDataDisplay({t: new Date(), message: 'WebSocket error: ' + error.message});
-    };
-    ws.onclose = () => {
-        console.log('WebSocket connection closed');
-        updateDataDisplay({t: new Date(), message: 'WebSocket connection closed'});
-    };
+    ws.onopen = handleWebSocketOpen;
+    ws.onmessage = handleWebSocketMessage;
+    ws.onerror = handleWebSocketError;
+    ws.onclose = handleWebSocketClose;
 }
 
 export function closeWebSocket() {
@@ -29,6 +19,30 @@ export function closeWebSocket() {
     }
 }
 
+const logAndDisplayMessage = (message, error) => {
+    console.log(message, error ? error : '');
+    updateDataDisplay({t: new Date(), message: `${message} ${error ? error.message : ''}`});
+};
+
+const handleWebSocketOpen = () => {
+    connectionState.isOpen = true;
+    logAndDisplayMessage('WebSocket connection established');
+};
+
+const handleWebSocketClose = () => {
+    connectionState.isOpen = false;
+    logAndDisplayMessage('WebSocket connection closed');
+};
+
+const handleWebSocketMessage = (event) => {
+    console.log('Received message:', event.data);
+    if (connectionState.isOpen) processWebSocketMessage(event.data);
+};
+
+const handleWebSocketError = (error) => {
+    logAndDisplayMessage('WebSocket error:', error);
+};
+
 const processWebSocketMessage = (data) => {
     try {
         const messages = JSON.parse(data);
@@ -36,13 +50,15 @@ const processWebSocketMessage = (data) => {
             console.error('Expected an array of messages, received:', messages);
             return;
         }
-        messages.forEach((message) => {
-            updateChartData(message);
-            updateDataDisplay(message);
-        });
+        messages.forEach(updateChartDataAndDisplay);
     } catch (error) {
         console.error('Error parsing data:', error);
     }
+};
+
+const updateChartDataAndDisplay = (message) => {
+    updateChartData(message);
+    updateDataDisplay(message);
 };
 
 const updateChartData = (data) => {
@@ -52,7 +68,7 @@ const updateChartData = (data) => {
 
 const updateChartEverySecond = () => {
     setInterval(() => {
-        if (latestPrice !== null && !isClosed) {
+        if (latestPrice !== null && connectionState.isOpen) {
             const now = new Date();
             addDataToChart(now, latestPrice);
             removeOldDataFromChart();
@@ -67,7 +83,8 @@ const addDataToChart = (time, price) => {
 
 const removeOldDataFromChart = () => {
     const cutoffTime = Date.now() - 14000;
-    cryptoChart.data.datasets[0].data = cryptoChart.data.datasets[0].data.filter(point => point.x >= cutoffTime);
+    cryptoChart.data.datasets[0].data = cryptoChart.data.datasets[0].data
+        .filter(point => point.x >= cutoffTime);
 };
 
 openWebSocket();

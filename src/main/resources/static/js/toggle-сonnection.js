@@ -1,18 +1,29 @@
-import { openWebSocket, closeWebSocket } from './websocket.js';
+import {openWebSocket, closeWebSocket} from './websocket.js';
 
-export let isClosed = false;
+const toggleBtn = document.getElementById('toggleConnection');
+
+export const connectionState = {
+    isOpen: false
+}
 
 export function toggleConnection() {
-    const toggleBtn = document.getElementById('toggleConnection');
-    if (!isClosed) {
-        toggleBtn.textContent = 'Open Connection';
-        isClosed = true;
-        closeWebSocket();
+    if (connectionState.isOpen) {
+        closeConnection();
     } else {
-        toggleBtn.textContent = 'Close Connection';
-        isClosed = false;
-        openWebSocket();
+        openConnection();
     }
 }
 
-document.getElementById('toggleConnection').addEventListener('click', toggleConnection);
+function closeConnection() {
+    toggleBtn.textContent = 'Open Connection';
+    connectionState.isOpen = false;
+    closeWebSocket();
+}
+
+function openConnection() {
+    toggleBtn.textContent = 'Close Connection';
+    connectionState.isOpen = true;
+    openWebSocket();
+}
+
+toggleBtn.addEventListener('click', toggleConnection);
