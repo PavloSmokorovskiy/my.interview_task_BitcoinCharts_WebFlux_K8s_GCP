@@ -58,7 +58,7 @@
                         autoSkip: true,
                         maxTicksLimit: 20
                     },
-                    min: () => Date.now() - 20000,
+                    min: () => Date.now() - 20000, // Показ последних 20 секунд
                     max: () => Date.now()
                 },
                 y: {
@@ -77,40 +77,46 @@
     });
 
     const ws = new WebSocket('ws://localhost:8080/crypto-feed');
-    ws.onopen = function () {
+    ws.onopen = function() {
         console.log('WebSocket connection established');
     };
 
-    ws.onmessage = function (event) {
+    ws.onmessage = function(event) {
         try {
             const messages = JSON.parse(event.data);
             messages.forEach((data) => {
-                latestPrice = data.p;
-                latestTime = new Date(data.t);
-                cryptoChart.data.datasets[0].data.push({
-                    x: latestTime,
-                    y: latestPrice
-                });
-
-                cryptoChart.data.datasets[0].data = cryptoChart.data.datasets[0].data.filter(point => point.x >= (Date.now() - 20000));
-
-                cryptoChart.update();
+                latestPrice = data.p; // Обновляем последнюю цену
+                latestTime = new Date(data.t); // Обновляем время последней цены
             });
         } catch (error) {
             console.error('Error parsing data:', error);
         }
     };
 
-    ws.onerror = function (error) {
+    ws.onerror = function(error) {
         console.error('WebSocket error:', error);
     };
 
-    ws.onclose = function () {
+    ws.onclose = function() {
         console.log('WebSocket connection closed');
     };
 
+    // Функция для регулярного обновления графика каждую секунду
     setInterval(() => {
-        cryptoChart.update();
+        if (latestPrice !== null) {
+            const now = new Date();
+            cryptoChart.data.datasets[0].data.push({
+                x: now, // Используем текущее время для метки
+                y: latestPrice
+            });
+
+            // Удаляем данные, которые старше 20 секунд
+            cryptoChart.data.datasets[0].data = cryptoChart.data.datasets[0].data.filter(point => point.x >= (Date.now() - 20000));
+
+            cryptoChart.update({
+                preservation: true
+            });
+        }
     }, 1000);
 
 </script>
