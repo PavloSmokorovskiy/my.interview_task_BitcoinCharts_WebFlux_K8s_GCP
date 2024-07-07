@@ -15,7 +15,6 @@
     const cryptoChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: [],
             datasets: [{
                 label: 'BTC-USD',
                 backgroundColor: 'rgba(0, 119, 204, 0.3)',
@@ -25,12 +24,20 @@
         },
         options: {
             scales: {
-                xAxes: [{
+                x: {
                     type: 'time',
                     time: {
                         unit: 'second'
                     }
-                }]
+                },
+                y: {
+                    beginAtZero: false
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true
+                }
             }
         }
     });
@@ -41,12 +48,13 @@
         const price = data.p;
         const time = new Date(data.t);
 
-        if (cryptoChart.data.labels.length > 50) {
-            cryptoChart.data.labels.shift();
+        cryptoChart.data.datasets[0].data.push({
+            x: time,
+            y: price
+        });
+        if (cryptoChart.data.datasets[0].data.length > 50) {
             cryptoChart.data.datasets[0].data.shift();
         }
-        cryptoChart.data.labels.push(time.toLocaleTimeString());
-        cryptoChart.data.datasets[0].data.push(price);
         cryptoChart.update();
     };
 </script>
