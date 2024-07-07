@@ -30,22 +30,27 @@ public class PolygonWebSocketClient implements WebSocketHandler {
         ReactorNettyWebSocketClient client = new ReactorNettyWebSocketClient();
 
         return client.execute(uri, webSocketSession ->
-                webSocketSession.send(
-                                Mono.just(webSocketSession.textMessage("{\"action\":\"auth\",\"params\":\"" + polygonApiService.getApiKey() + "\"}"))
-                        ).thenMany(webSocketSession.receive()
-                                .doOnNext(message -> {
-                                    String payload = message.getPayloadAsText();
-                                    System.out.println("Received message: " + payload);
-                                    if (payload.contains("\"status\":\"connected\"")) {
-                                        webSocketSession.send(Mono.just(webSocketSession.textMessage("{\"action\":\"subscribe\",\"params\":\"XT.BTC-USD\"}")))
-                                                .subscribe();
-                                    }
-                                    session.send(Mono.just(session.textMessage(payload))).subscribe();
-                                })
-                                .doOnError(error -> System.err.println("Error in WebSocket session: " + error.getMessage()))
-                                .doOnTerminate(() -> System.out.println("WebSocket session terminated."))
-                        )
-                        .then());
+                        webSocketSession.send(
+                                        Mono.just(webSocketSession.textMessage("{\"action\":\"auth\",\"params\":\"" + polygonApiService.getApiKey() + "\"}"))
+                                ).thenMany(webSocketSession.receive()
+                                        .doOnNext(message -> {
+                                            String payload = message.getPayloadAsText();
+                                            System.out.println("Received message: " + payload);
+                                            if (payload.contains("\"status\":\"connected\"")) {
+                                                webSocketSession.send(Mono.just(webSocketSession.textMessage("{\"action\":\"subscribe\",\"params\":\"XT.BTC-USD\"}")))
+                                                        .onErrorContinue((throwable, o) -> System.err.println("Failed to send message: " + throwable.getMessage()))
+                                                        .subscribe();
+                                            }
+                                            session.send(Mono.just(session.textMessage(payload))).subscribe();
+                                        })
+                                        .doOnError(error -> System.err.println("Error in WebSocket session: " + error.getMessage()))
+                                        .doOnTerminate(() -> System.out.println("WebSocket session terminated."))
+                                )
+                                .then())
+                .onErrorResume(e -> {
+                    System.err.println("Connection failed: " + e.getMessage());
+                    return Mono.empty();
+                });
     }
 
 //    @PostConstruct

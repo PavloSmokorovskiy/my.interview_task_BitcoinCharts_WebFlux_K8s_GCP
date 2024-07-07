@@ -31,6 +31,9 @@
 <canvas id="cryptoChart"></canvas>
 <script>
     const ctx = document.getElementById('cryptoChart').getContext('2d');
+    let latestPrice = null;
+    let latestTime = null;
+
     const cryptoChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -77,27 +80,11 @@
     };
 
     ws.onmessage = function(event) {
-        console.log('Data received:', event.data);
         try {
             const messages = JSON.parse(event.data);
-            console.log("Parsed data received:", messages);
             messages.forEach((data) => {
-                const price = data.p;
-                const time = data.t ? new Date(data.t) : new Date(); // Убедитесь, что time - это Date объект
-                console.log("Price:", price, "Time:", time);
-
-                if (cryptoChart.data.datasets.length > 0) {
-                    cryptoChart.data.datasets[0].data.push({
-                        x: time,
-                        y: price
-                    });
-
-                    if (cryptoChart.data.datasets[0].data.length > 50) {
-                        cryptoChart.data.datasets[0].data.shift();
-                    }
-
-                    cryptoChart.update();
-                }
+                latestPrice = data.p;
+                latestTime = new Date(data.t);
             });
         } catch (error) {
             console.error('Error parsing data:', error);
@@ -111,6 +98,24 @@
     ws.onclose = function() {
         console.log('WebSocket connection closed');
     };
+
+    // Функция обновления графика каждую секунду
+    setInterval(() => {
+        if (latestPrice !== null && latestTime !== null) {
+            const time = new Date(latestTime.getTime() + 1000); // добавляем секунду к последнему известному времени
+            cryptoChart.data.datasets[0].data.push({
+                x: time,
+                y: latestPrice
+            });
+
+            if (cryptoChart.data.datasets[0].data.length > 50) {
+                cryptoChart.data.datasets[0].data.shift();
+            }
+
+            cryptoChart.update();
+            latestTime = time; // обновляем последнее время
+        }
+    }, 1000);
 
 
 </script>
