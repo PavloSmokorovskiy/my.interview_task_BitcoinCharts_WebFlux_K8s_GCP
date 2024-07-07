@@ -6,6 +6,19 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+    <style>
+        #cryptoChart {
+            width: 800px;
+            height: 400px;
+        }
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    </style>
 </head>
 <body>
 <h2>Real-Time BTC-USD Price Chart</h2>
@@ -17,9 +30,11 @@
         data: {
             datasets: [{
                 label: 'BTC-USD',
-                backgroundColor: 'rgba(0, 119, 204, 0.3)',
-                borderColor: 'rgba(0, 119, 204, 0.8)',
-                data: []
+                backgroundColor: 'rgba(0, 119, 204, 0.5)',
+                borderColor: 'rgba(0, 119, 204, 1)',
+                fill: false,
+                lineTension: 0.1,
+                borderWidth: 2
             }]
         },
         options: {
@@ -27,18 +42,27 @@
                 x: {
                     type: 'time',
                     time: {
-                        unit: 'second'
+                        unit: 'second',
+                        tooltipFormat: 'HH:mm:ss'
+                    },
+                    ticks: {
+                        autoSkip: true,
+                        maxTicksLimit: 20
                     }
                 },
                 y: {
-                    beginAtZero: false
+                    beginAtZero: false,
+                    min: 50000,
+                    max: 60000,
                 }
             },
             plugins: {
                 legend: {
                     display: true
                 }
-            }
+            },
+            maintainAspectRatio: false,
+            responsive: true
         }
     });
 
@@ -55,7 +79,9 @@
         if (cryptoChart.data.datasets[0].data.length > 50) {
             cryptoChart.data.datasets[0].data.shift();
         }
-        cryptoChart.update();
+        cryptoChart.update({
+            preservation: true
+        });
     };
 </script>
 </body>
