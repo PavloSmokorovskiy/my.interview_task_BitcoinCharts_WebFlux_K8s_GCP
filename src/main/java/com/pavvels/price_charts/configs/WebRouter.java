@@ -15,6 +15,8 @@ public class WebRouter {
     public RouterFunction<ServerResponse> htmlRouter() {
         return RouterFunctions
                 .route(RequestPredicates.GET("/"), request ->
-                        ServerResponse.ok().bodyValue(new ClassPathResource("static/index.html")));
+                        ServerResponse
+                                .ok()
+                                .bodyValue(new ClassPathResource("static/index.html")));
     }
 }

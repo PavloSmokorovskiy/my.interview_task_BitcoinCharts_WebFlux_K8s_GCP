@@ -1,5 +1,5 @@
-import {updateDataDisplay} from './data-display.js';
-import {connectionState} from './toggle-сonnection.js';
+import {updateDataDisplay} from './dataDisplay.js';
+import {connectionState} from './toggleConnection.js';
 
 let ws;
 let latestPrice;

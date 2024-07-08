@@ -11,8 +11,3 @@ server:
 polygon:
   api:
     key: -1 #come through launch parameters
-
-binance:
-  api:
-    key: -1 #come through launch parameters
-    secret: -1 #come through launch parameters
