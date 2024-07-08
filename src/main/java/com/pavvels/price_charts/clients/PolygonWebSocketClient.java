@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class PolygonWebSocketClient implements WebSocketHandler {
     private static final String AUTH_MESSAGE_TEMPLATE = "{\"action\":\"auth\",\"params\":\"%s\"}";
-    private static final String SUBSCRIBE_MESSAGE_TEMPLATE = "{\"action\":\"subscribe\",\"params\":\"XT.BTC-USD\"}";
+    private static final String SUBSCRIBE_MESSAGE = "{\"action\":\"subscribe\",\"params\":\"XT.BTC-USD\"}";
     private static final URI WEBSOCKET_URI = URI.create("wss://socket.polygon.io/crypto");
 
     private final PolygonApiKeysService polygonApiKeysService;
@@ -44,22 +44,59 @@ public class PolygonWebSocketClient implements WebSocketHandler {
         clientSessions.add(session);
     }
 
+    private void openPolygonConnection() {
+        client.execute(WEBSOCKET_URI, this::sessionHandler).subscribe();
+    }
+
+    private Mono<Void> sessionHandler(WebSocketSession session) {
+        polygonSession = session;
+        return sendAuthMessage(session).thenMany(receiveAuthMessage(session)).then();
+    }
+
+    private Mono<Void> sendAuthMessage(WebSocketSession webSocketSession) {
+        String authMessage = String.format(AUTH_MESSAGE_TEMPLATE, polygonApiKeysService.getApiKey());
+        return sendTextMessage(webSocketSession, authMessage);
+    }
+
+    private Flux<WebSocketMessage> receiveAuthMessage(WebSocketSession session) {
+        return session.receive().doOnNext(message -> processReceivedMessage(session, message));
+    }
+
+    private void processReceivedMessage(WebSocketSession session, WebSocketMessage message) {
+        var payload = message.getPayloadAsText();
+        log.info("Received message: {}", payload);
+        if (payload.contains("\"status\":\"auth_success\"")) {
+            sendSubscribeMessage(session).subscribe();
+        }
+        broadcastMessageToClients(payload);
+    }
+
+    private void broadcastMessageToClients(String payload) {
+        clientSessions.stream().filter(WebSocketSession::isOpen).forEach(session -> sendTextMessage(session, payload).subscribe());
+    }
+
+    private Mono<Void> sendSubscribeMessage(WebSocketSession webSocketSession) {
+        return sendTextMessage(webSocketSession, SUBSCRIBE_MESSAGE);
+    }
+
+    private Mono<Void> sendTextMessage(WebSocketSession webSocketSession, String payload) {
+        return webSocketSession.send(Mono.just(webSocketSession.textMessage(payload))).onErrorResume(e -> {
+            log.error("Failed to send message: {}", e.getMessage());
+            return Mono.empty();
+        });
+    }
+
     private Mono<Void> sessionOperations(WebSocketSession session) {
-        return session.receive()
-                .map(WebSocketMessage::getPayloadAsText)
-                .doOnNext(this::broadcastMessageToClients)
-                .then()
-                .doFinally(sig -> closeClientSession(session))
-                .onErrorResume(e -> {
-                    log.error("Connection failed: {}", e.getMessage());
-                    return Mono.empty();
-                });
+        return session.receive().map(WebSocketMessage::getPayloadAsText).doOnNext(this::broadcastMessageToClients).then().doFinally(sig -> closeClientSession(session)).onErrorResume(e -> {
+            log.error("Connection failed: {}", e.getMessage());
+            return Mono.empty();
+        });
     }
 
     private void closeClientSession(WebSocketSession session) {
         clientSessions.remove(session);
         checkAndClosePolygonConnection();
-        forceCloseSession(session);
+        closeSession(session);
         log.info("Client WebSocket session closed.");
     }
 
@@ -69,62 +106,14 @@ public class PolygonWebSocketClient implements WebSocketHandler {
         }
     }
 
-    private void forceCloseSession(WebSocketSession session) {
+    private void closePolygonConnection() {
+        closeSession(polygonSession);
+        log.info("Polygon WebSocket session closed.");
+    }
+
+    private void closeSession(WebSocketSession session) {
         if (session.isOpen()) {
             session.close().subscribe();
         }
-    }
-
-    private void openPolygonConnection() {
-        client.execute(WEBSOCKET_URI, this::sessionHandler).subscribe();
-    }
-
-    private Mono<Void> sessionHandler(WebSocketSession session) {
-        polygonSession = session;
-        return sendAuthMessage(session)
-                .thenMany(receiveAuthMessage(session))
-                .then();
-    }
-
-    private Flux<WebSocketMessage> receiveAuthMessage(WebSocketSession session) {
-        return session.receive().doOnNext(message -> processReceivedMessage(session, message));
-    }
-
-    private void processReceivedMessage(WebSocketSession session, WebSocketMessage message) {
-        log.info("Received message: {}", message.getPayloadAsText());
-        if (message.getPayloadAsText().contains("\"status\":\"auth_success\"")) {
-            sendSubscribeMessage(session).subscribe();
-        }
-        broadcastMessageToClients(message.getPayloadAsText());
-    }
-
-    private void closePolygonConnection() {
-        if (polygonSession != null && polygonSession.isOpen()) {
-            polygonSession.close().subscribe();
-            log.info("Polygon WebSocket session closed.");
-        }
-    }
-
-    private Mono<Void> sendAuthMessage(WebSocketSession webSocketSession) {
-        String authMessage = String.format(AUTH_MESSAGE_TEMPLATE, polygonApiKeysService.getApiKey());
-        return webSocketSession.send(Mono.just(webSocketSession.textMessage(authMessage)));
-    }
-
-    private void broadcastMessageToClients(String payload) {
-        clientSessions.forEach(session -> {
-            if (session.isOpen()) {
-                session.send(Mono.just(session.textMessage(payload)))
-                        .onErrorResume(e -> {
-                            log.error("Failed to send message to client: {}", e.getMessage());
-                            return Mono.empty();
-                        }).subscribe();
-            }
-        });
-    }
-
-    private Mono<Void> sendSubscribeMessage(WebSocketSession webSocketSession) {
-        String subscribeMessage = String.format(SUBSCRIBE_MESSAGE_TEMPLATE);
-        return webSocketSession.send(Mono.just(webSocketSession.textMessage(subscribeMessage)))
-                .onErrorContinue((throwable, o) -> log.error("Failed to send subscribe message: {}", throwable.getMessage()));
     }
 }
