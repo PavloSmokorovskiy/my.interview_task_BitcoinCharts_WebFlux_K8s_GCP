@@ -9,6 +9,7 @@ import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -32,47 +33,70 @@ public class PolygonWebSocketClient implements WebSocketHandler {
 
     @Override
     public Mono<Void> handle(WebSocketSession session) {
+        manageActiveSessions(session);
+        return sessionOperations(session);
+    }
+
+    private void manageActiveSessions(WebSocketSession session) {
         if (clientSessions.isEmpty()) {
             openPolygonConnection();
         }
         clientSessions.add(session);
+    }
 
+    private Mono<Void> sessionOperations(WebSocketSession session) {
         return session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
                 .doOnNext(this::broadcastMessageToClients)
                 .then()
-                .doFinally(sig -> {
-                    clientSessions.remove(session);
-                    if (clientSessions.isEmpty()) {
-                        closePolygonConnection();
-                    }
-                    if (session.isOpen()) {
-                        session.close().subscribe();
-                    }
-                    log.info("Client WebSocket session closed.");
-                })
+                .doFinally(sig -> closeClientSession(session))
                 .onErrorResume(e -> {
                     log.error("Connection failed: {}", e.getMessage());
                     return Mono.empty();
                 });
     }
 
-    private void openPolygonConnection() {
-        client.execute(WEBSOCKET_URI, session -> {
-            polygonSession = session;
-            return sendAuthMessage(session)
-                    .thenMany(session.receive()
-                            .doOnNext(message -> {
-                                log.info("Received message: {}", message.getPayloadAsText());
-                                if (message.getPayloadAsText().contains("\"status\":\"auth_success\"")) {
-                                    sendSubscribeMessage(session).subscribe();
-                                }
-                                broadcastMessageToClients(message.getPayloadAsText());
-                            }))
-                    .then();
-        }).subscribe();
+    private void closeClientSession(WebSocketSession session) {
+        clientSessions.remove(session);
+        checkAndClosePolygonConnection();
+        forceCloseSession(session);
+        log.info("Client WebSocket session closed.");
     }
 
+    private void checkAndClosePolygonConnection() {
+        if (clientSessions.isEmpty()) {
+            closePolygonConnection();
+        }
+    }
+
+    private void forceCloseSession(WebSocketSession session) {
+        if (session.isOpen()) {
+            session.close().subscribe();
+        }
+    }
+
+    private void openPolygonConnection() {
+        client.execute(WEBSOCKET_URI, this::sessionHandler).subscribe();
+    }
+
+    private Mono<Void> sessionHandler(WebSocketSession session) {
+        polygonSession = session;
+        return sendAuthMessage(session)
+                .thenMany(receiveAuthMessage(session))
+                .then();
+    }
+
+    private Flux<WebSocketMessage> receiveAuthMessage(WebSocketSession session) {
+        return session.receive().doOnNext(message -> processReceivedMessage(session, message));
+    }
+
+    private void processReceivedMessage(WebSocketSession session, WebSocketMessage message) {
+        log.info("Received message: {}", message.getPayloadAsText());
+        if (message.getPayloadAsText().contains("\"status\":\"auth_success\"")) {
+            sendSubscribeMessage(session).subscribe();
+        }
+        broadcastMessageToClients(message.getPayloadAsText());
+    }
 
     private void closePolygonConnection() {
         if (polygonSession != null && polygonSession.isOpen()) {
