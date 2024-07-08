@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketSession;
+import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
 import reactor.core.publisher.Mono;
 
@@ -27,13 +28,24 @@ public class PolygonWebSocketClient implements WebSocketHandler {
     private final PolygonApiKeysService polygonApiKeysService;
     private final ReactorNettyWebSocketClient client;
     private final Set<WebSocketSession> clientSessions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private WebSocketSession polygonSession;
 
     @Override
     public Mono<Void> handle(WebSocketSession session) {
+        if (clientSessions.isEmpty()) {
+            openPolygonConnection();
+        }
         clientSessions.add(session);
-        return client.execute(WEBSOCKET_URI, this::initializePolygonConnection)
+
+        return session.receive()
+                .map(WebSocketMessage::getPayloadAsText)
+                .doOnNext(this::broadcastMessageToClients)
+                .then()
                 .doFinally(sig -> {
                     clientSessions.remove(session);
+                    if (clientSessions.isEmpty()) {
+                        closePolygonConnection();
+                    }
                     if (session.isOpen()) {
                         session.close().subscribe();
                     }
@@ -45,19 +57,28 @@ public class PolygonWebSocketClient implements WebSocketHandler {
                 });
     }
 
-    private Mono<Void> initializePolygonConnection(WebSocketSession webSocketSession) {
-        return sendAuthMessage(webSocketSession)
-                .thenMany(webSocketSession.receive()
-                        .doOnNext(message -> {
-                            log.info("Received message: {}", message.getPayloadAsText());
-                            if (message.getPayloadAsText().contains("\"status\":\"connected\"")) {
-                                sendSubscribeMessage(webSocketSession).subscribe();
-                            }
-                            broadcastMessageToClients(message.getPayloadAsText());
-                        })
-                        .doOnError(error -> log.error("Error in WebSocket session: {}", error.getMessage()))
-                        .doOnTerminate(() -> log.info("WebSocket session terminated.")))
-                .then();
+    private void openPolygonConnection() {
+        client.execute(WEBSOCKET_URI, session -> {
+            polygonSession = session;
+            return sendAuthMessage(session)
+                    .thenMany(session.receive()
+                            .doOnNext(message -> {
+                                log.info("Received message: {}", message.getPayloadAsText());
+                                if (message.getPayloadAsText().contains("\"status\":\"auth_success\"")) {
+                                    sendSubscribeMessage(session).subscribe();
+                                }
+                                broadcastMessageToClients(message.getPayloadAsText());
+                            }))
+                    .then();
+        }).subscribe();
+    }
+
+
+    private void closePolygonConnection() {
+        if (polygonSession != null && polygonSession.isOpen()) {
+            polygonSession.close().subscribe();
+            log.info("Polygon WebSocket session closed.");
+        }
     }
 
     private Mono<Void> sendAuthMessage(WebSocketSession webSocketSession) {
