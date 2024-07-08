@@ -8,11 +8,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import org.springframework.web.reactive.socket.WebSocketMessage;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @NonNullApi
 @Component
@@ -25,17 +26,38 @@ public class PolygonWebSocketClient implements WebSocketHandler {
 
     private final PolygonApiKeysService polygonApiKeysService;
     private final ReactorNettyWebSocketClient client;
+    private final Set<WebSocketSession> clientSessions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Override
     public Mono<Void> handle(WebSocketSession session) {
-        System.out.println("Attempting to connect to WebSocket server at:");
-        return client.execute(WEBSOCKET_URI, webSocketSession -> sendAuthMessage(webSocketSession)
-                        .thenMany(receiveAndHandleMessages(webSocketSession, session))
-                        .then())
+        clientSessions.add(session);
+        return client.execute(WEBSOCKET_URI, this::initializePolygonConnection)
+                .doFinally(sig -> {
+                    clientSessions.remove(session);
+                    if (session.isOpen()) {
+                        session.close().subscribe();
+                    }
+                    log.info("Client WebSocket session closed.");
+                })
                 .onErrorResume(e -> {
                     log.error("Connection failed: {}", e.getMessage());
                     return Mono.empty();
                 });
+    }
+
+    private Mono<Void> initializePolygonConnection(WebSocketSession webSocketSession) {
+        return sendAuthMessage(webSocketSession)
+                .thenMany(webSocketSession.receive()
+                        .doOnNext(message -> {
+                            log.info("Received message: {}", message.getPayloadAsText());
+                            if (message.getPayloadAsText().contains("\"status\":\"connected\"")) {
+                                sendSubscribeMessage(webSocketSession).subscribe();
+                            }
+                            broadcastMessageToClients(message.getPayloadAsText());
+                        })
+                        .doOnError(error -> log.error("Error in WebSocket session: {}", error.getMessage()))
+                        .doOnTerminate(() -> log.info("WebSocket session terminated.")))
+                .then();
     }
 
     private Mono<Void> sendAuthMessage(WebSocketSession webSocketSession) {
@@ -43,23 +65,21 @@ public class PolygonWebSocketClient implements WebSocketHandler {
         return webSocketSession.send(Mono.just(webSocketSession.textMessage(authMessage)));
     }
 
-    private Flux<WebSocketMessage> receiveAndHandleMessages(WebSocketSession webSocketSession, WebSocketSession session) {
-        return webSocketSession.receive()
-                .doOnNext(message -> handleMessage(webSocketSession, session, message.getPayloadAsText()))
-                .doOnError(error -> log.error("Error in WebSocket session: {}", error.getMessage()))
-                .doOnTerminate(() -> log.info("WebSocket session terminated."));
-    }
-
-    private void handleMessage(WebSocketSession webSocketSession, WebSocketSession session, String payload) {
-        log.info("Received message: {}", payload);
-        if (payload.contains("\"status\":\"connected\"")) {
-            sendSubscribeMessage(webSocketSession).subscribe();
-        }
-        session.send(Mono.just(session.textMessage(payload))).subscribe();
+    private void broadcastMessageToClients(String payload) {
+        clientSessions.forEach(session -> {
+            if (session.isOpen()) {
+                session.send(Mono.just(session.textMessage(payload)))
+                        .onErrorResume(e -> {
+                            log.error("Failed to send message to client: {}", e.getMessage());
+                            return Mono.empty();
+                        }).subscribe();
+            }
+        });
     }
 
     private Mono<Void> sendSubscribeMessage(WebSocketSession webSocketSession) {
-        return webSocketSession.send(Mono.just(webSocketSession.textMessage(SUBSCRIBE_MESSAGE_TEMPLATE)))
-                .onErrorContinue((throwable, o) -> log.error("Failed to send message: {}", throwable.getMessage()));
+        String subscribeMessage = String.format(SUBSCRIBE_MESSAGE_TEMPLATE);
+        return webSocketSession.send(Mono.just(webSocketSession.textMessage(subscribeMessage)))
+                .onErrorContinue((throwable, o) -> log.error("Failed to send subscribe message: {}", throwable.getMessage()));
     }
 }
