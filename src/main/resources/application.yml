@@ -10,4 +10,4 @@ server:
 
 polygon:
   api:
-    key: -1 #come through launch parameters
+    key: uA0b68posq6OqaQCGHs_5fvpBB0P7z8w #this make app independent in tests
