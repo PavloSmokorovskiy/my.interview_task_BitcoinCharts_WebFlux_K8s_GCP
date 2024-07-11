@@ -6,7 +6,7 @@ let latestPrice;
 let latestTime = new Date();
 
 export function openWebSocket() {
-    ws = new WebSocket('ws://localhost:8080/crypto-feed');
+    ws = new WebSocket('ws://34.162.238.228:80/crypto-feed');
     ws.onopen = handleWebSocketOpen;
     ws.onmessage = handleWebSocketMessage;
     ws.onerror = handleWebSocketError;
